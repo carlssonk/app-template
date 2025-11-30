@@ -2,6 +2,10 @@ terraform {
   backend "s3" {}
 }
 
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
+}
+
 module "cloudflare_zone" {
   source       = "github.com/carlssonk/terraform-modules//modules/cloudflare-zone?ref=main"
   environments = ["production"]
