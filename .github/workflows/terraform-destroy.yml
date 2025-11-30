@@ -62,8 +62,8 @@ jobs:
         include:
           - name: Infrastructure - production
             tf_root_directory: ./terraform/environments/staging-and-production
-          - name: Cloudflare
-            tf_root_directory: ./terraform/environments/cloudflare
+          - name: Global
+            tf_root_directory: ./terraform/global
     permissions:
       contents: write
       id-token: write

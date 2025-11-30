@@ -99,8 +99,8 @@ jobs:
         include:
           - name: Production
             tf_root_directory: ./terraform/environments/staging-and-production
-          - name: Cloudflare Zone
-            tf_root_directory: ./terraform/environments/cloudflare-zone
+          - name: Global
+            tf_root_directory: ./terraform/global
     uses: carlssonk/terraform-modules/.github/workflows/deploy.yml@main
     with:
       environment: production
