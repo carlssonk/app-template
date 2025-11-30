@@ -83,9 +83,35 @@ jobs:
       tf_root_directory: ./terraform/environments/staging-and-production
       action: ${{ needs.deployment-strategy.outputs.action }}
 
+  debug-production-conditions:
+    name: Debug Production Deployment Conditions
+    runs-on: ubuntu-latest
+    needs: [deployment-strategy, deploy-staging]
+    if: always()
+    steps:
+      - name: Log all relevant variables
+        run: |
+          echo "=== Deployment Strategy Outputs ==="
+          echo "should_run: ${{ needs.deployment-strategy.outputs.should_run }}"
+          echo "action: ${{ needs.deployment-strategy.outputs.action }}"
+          echo "environments: ${{ needs.deployment-strategy.outputs.environments }}"
+          echo ""
+          echo "=== Job Results ==="
+          echo "deployment-strategy.result: ${{ needs.deployment-strategy.result }}"
+          echo "deploy-staging.result: ${{ needs.deploy-staging.result }}"
+          echo "approve-deployment.result: ${{ needs.approve-deployment.result }}"
+          echo ""
+          echo "=== Conditional Checks ==="
+          echo "contains environments 'production': ${{ contains(fromJson(needs.deployment-strategy.outputs.environments), 'production') }}"
+          echo "deploy-staging not failure: ${{ needs.deploy-staging.result != 'failure' }}"
+          echo "is plan OR approved: ${{ needs.deployment-strategy.outputs.action == 'plan' || needs.approve-deployment.result == 'success' }}"
+          echo ""
+          echo "=== Final Condition Result ==="
+          echo "Should deploy-production-environments run: ${{ needs.deployment-strategy.outputs.should_run == 'true' && contains(fromJson(needs.deployment-strategy.outputs.environments), 'production') && needs.deploy-staging.result != 'failure' && (needs.deployment-strategy.outputs.action == 'plan' || needs.approve-deployment.result == 'success') }}"
+
   deploy-production-environments:
     name: ${{ needs.deployment-strategy.outputs.action == 'plan' && 'Plan' || 'Deploy' }} ${{ matrix.name }}
-    needs: [deployment-strategy, deploy-staging]
+    needs: [deployment-strategy, deploy-staging, debug-production-conditions]
     if: |
       always() &&
       needs.deployment-strategy.outputs.should_run == 'true' &&
