@@ -10,7 +10,7 @@ on:
         options:
           - dev
           - staging
-          - prod
+          - production
 
 jobs:
   call-workflow:

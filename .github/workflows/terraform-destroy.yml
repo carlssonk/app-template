@@ -10,7 +10,7 @@ on:
         options:
           - dev
           - staging
-          - prod
+          - production
       confirmation:
         description: 'Type "DESTROY" to confirm infrastructure destruction'
         required: true
@@ -52,16 +52,16 @@ jobs:
       environment: staging
       aws_region: ${{ vars.AWS_REGION }}
       aws_account_id: ${{ vars.AWS_ACCOUNT_ID_STAGING }}
-      tf_root_directory: ./terraform/environments/staging-and-prod
+      tf_root_directory: ./terraform/environments/staging-and-production
 
-  destroy-prod-environments:
+  destroy-production-environments:
     needs: validate-confirmation
-    if: inputs.environment == 'prod'
+    if: inputs.environment == 'production'
     strategy:
       matrix:
         include:
-          - name: Infrastructure - Production
-            tf_root_directory: ./terraform/environments/staging-and-prod
+          - name: Infrastructure - production
+            tf_root_directory: ./terraform/environments/staging-and-production
           - name: Cloudflare
             tf_root_directory: ./terraform/environments/cloudflare
     permissions:
@@ -69,9 +69,9 @@ jobs:
       id-token: write
     uses: carlssonk/terraform-modules/.github/workflows/destroy.yml@main
     with:
-      environment: prod
+      environment: production
       aws_region: ${{ vars.AWS_REGION }}
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_PROD }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_production }}
       tf_root_directory: ${{ matrix.tf_root_directory }}
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

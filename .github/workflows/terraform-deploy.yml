@@ -44,7 +44,7 @@ jobs:
     if: |
       needs.deployment-strategy.outputs.should_run == 'true' &&
       needs.deployment-strategy.outputs.action == 'apply' && 
-      contains(fromJson(needs.deployment-strategy.outputs.environments), 'prod')
+      contains(fromJson(needs.deployment-strategy.outputs.environments), 'production')
     environment:
       name: infra-approval
     steps:
@@ -80,16 +80,16 @@ jobs:
       environment: staging
       aws_region: ${{ vars.AWS_REGION }}
       aws_account_id: ${{ vars.AWS_ACCOUNT_ID_STAGING }}
-      tf_root_directory: ./terraform/environments/staging-and-prod
+      tf_root_directory: ./terraform/environments/staging-and-production
       action: ${{ needs.deployment-strategy.outputs.action }}
 
-  deploy-prod-environments:
+  deploy-production-environments:
     name: ${{ needs.deployment-strategy.outputs.action == 'plan' && 'Plan' || 'Deploy' }} ${{ matrix.name }}
     needs: [deployment-strategy, deploy-staging]
     if: |
       always() &&
       needs.deployment-strategy.outputs.should_run == 'true' &&
-      contains(fromJson(needs.deployment-strategy.outputs.environments), 'prod') &&
+      contains(fromJson(needs.deployment-strategy.outputs.environments), 'production') &&
       needs.deploy-staging.result == 'success' &&
       (needs.deployment-strategy.outputs.action == 'plan' || needs.approve-deployment.result == 'success')
     permissions:
@@ -98,15 +98,15 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: Infrastructure - Production
-            tf_root_directory: ./terraform/environments/staging-and-prod
-          - name: Cloudflare
-            tf_root_directory: ./terraform/environments/cloudflare
+          - name: Infrastructure - production
+            tf_root_directory: ./terraform/environments/staging-and-production
+          - name: Cloudflare Zone
+            tf_root_directory: ./terraform/environments/cloudflare-zone
     uses: carlssonk/terraform-modules/.github/workflows/deploy.yml@main
     with:
-      environment: prod
+      environment: production
       aws_region: ${{ vars.AWS_REGION }}
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_PROD }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_production }}
       tf_root_directory: ${{ matrix.tf_root_directory }}
       action: ${{ needs.deployment-strategy.outputs.action }}
     secrets:
