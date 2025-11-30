@@ -52,9 +52,11 @@ jobs:
         run: echo "Deployment approved"
 
   deploy-dev:
+    when: never
     name: ${{ needs.deployment-strategy.outputs.action == 'plan' && 'Plan' || 'Deploy' }} Infrastructure - Development
     needs: deployment-strategy
-    if: needs.deployment-strategy.outputs.should_run == 'true' && contains(fromJson(needs.deployment-strategy.outputs.environments), 'dev')
+    # Job disabled (false &&)
+    if: false && needs.deployment-strategy.outputs.should_run == 'true' && contains(fromJson(needs.deployment-strategy.outputs.environments), 'dev')
     permissions:
       contents: write
       id-token: write
@@ -70,7 +72,8 @@ jobs:
   deploy-staging:
     name: ${{ needs.deployment-strategy.outputs.action == 'plan' && 'Plan' || 'Deploy' }} Infrastructure - Staging
     needs: deployment-strategy
-    if: needs.deployment-strategy.outputs.should_run == 'true' && contains(fromJson(needs.deployment-strategy.outputs.environments), 'staging')
+    # Job disabled (false &&)
+    if: false && needs.deployment-strategy.outputs.should_run == 'true' && contains(fromJson(needs.deployment-strategy.outputs.environments), 'staging')
     permissions:
       contents: write
       id-token: write
