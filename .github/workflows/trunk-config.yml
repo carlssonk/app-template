@@ -51,7 +51,7 @@ jobs:
             if [ "${{ inputs.event_name }}" = "pull_request" ]; then
               ACTION="plan"
               if [ "$BRANCH" = "main" ]; then
-                ENVIRONMENTS="[\"staging\",\"prod\"]"
+                ENVIRONMENTS="[\"staging\",\"production\"]"
                 SHOULD_RUN=true
               elif [[ "$BRANCH" == dev/* ]]; then
                 ENVIRONMENTS="[\"dev\"]"
@@ -62,7 +62,7 @@ jobs:
               fi
             elif [ "${{ inputs.event_name }}" = "push" ] && [ "$BRANCH" = "main" ]; then
               ACTION="apply"
-              ENVIRONMENTS="[\"staging\",\"prod\"]"
+              ENVIRONMENTS="[\"staging\",\"production\"]"
               SHOULD_RUN=true
             elif [ "${{ inputs.event_name }}" = "push" ] && [[ "$BRANCH" == dev/* ]]; then
               ACTION="plan"
