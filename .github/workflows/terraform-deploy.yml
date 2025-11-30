@@ -52,7 +52,6 @@ jobs:
         run: echo "Deployment approved"
 
   deploy-dev:
-    when: never
     name: ${{ needs.deployment-strategy.outputs.action == 'plan' && 'Plan' || 'Deploy' }} Infrastructure - Development
     needs: deployment-strategy
     # Job disabled (false &&)
