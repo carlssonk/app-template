@@ -106,7 +106,7 @@ jobs:
     with:
       environment: production
       aws_region: ${{ vars.AWS_REGION }}
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_production }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_PRODUCTION }}
       tf_root_directory: ${{ matrix.tf_root_directory }}
       action: ${{ needs.deployment-strategy.outputs.action }}
     secrets:
