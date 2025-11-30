@@ -19,6 +19,6 @@ module "carlssonk_se_zone" {
   zone_name = "carlssonk.se"
   
   settings = {
-    ssl                      = "flexible"  # Required for S3 website endpoints
+    ssl = "flexible"  # Required for S3 website endpoints
   }
 }
