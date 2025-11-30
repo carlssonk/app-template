@@ -1,0 +1,46 @@
+name: Deploy App (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      aws_account_id:
+        required: true
+        type: string
+      aws_region:
+        required: true
+        type: string
+      s3_bucket:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: Deploy App - ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS Credentials (OIDC)
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/github-actions-cicd-role
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build
+      run: npm run build
+
+    - name: Deploy to S3
+      run: |
+        aws s3 sync dist/ s3://${{ inputs.s3_bucket }} --delete
+

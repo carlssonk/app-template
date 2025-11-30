@@ -13,7 +13,7 @@ on:
         required: false
         type: string
         default: ''
-      workflow_dispatch_action:
+      workflow_dispatch_tf_action:
         required: false
         type: string
         default: ''
@@ -21,12 +21,9 @@ on:
       environments:
         description: "Environments to deploy"
         value: ${{ jobs.strategy.outputs.environments }}
-      action:
+      tf_action:
         description: "Action to perform (plan or apply)"
         value: ${{ jobs.strategy.outputs.action }}
-      should_run:
-        description: "Whether workflow should run"
-        value: ${{ jobs.strategy.outputs.should_run }}
 
 jobs:
   strategy:
@@ -34,48 +31,39 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       environments: ${{ steps.set-config.outputs.environments }}
-      action: ${{ steps.set-config.outputs.action }}
-      should_run: ${{ steps.set-config.outputs.should_run }}
+      tf_action: ${{ steps.set-config.outputs.tf_action }}
     steps:
       - id: set-config
         run: |
           # Handle manual workflow_dispatch trigger
           if [ "${{ inputs.event_name }}" = "workflow_dispatch" ]; then
-            ACTION="${{ inputs.workflow_dispatch_action }}"
+            TF_ACTION="${{ inputs.workflow_dispatch_tf_action }}"
             ENVIRONMENTS="[\"${{ inputs.workflow_dispatch_environment }}\"]"
-            SHOULD_RUN=true
           else
             BRANCH="${{ inputs.branch }}"
             
             # Determine environments and action based on event and branch
             if [ "${{ inputs.event_name }}" = "pull_request" ]; then
-              ACTION="plan"
+              TF_ACTION="plan"
               if [ "$BRANCH" = "main" ]; then
                 ENVIRONMENTS="[\"staging\",\"production\"]"
-                SHOULD_RUN=true
               elif [[ "$BRANCH" == dev/* ]]; then
                 ENVIRONMENTS="[\"dev\"]"
-                SHOULD_RUN=true
               else
                 ENVIRONMENTS="[]"
-                SHOULD_RUN=false
               fi
             elif [ "${{ inputs.event_name }}" = "push" ] && [ "$BRANCH" = "main" ]; then
-              ACTION="apply"
+              TF_ACTION="apply"
               ENVIRONMENTS="[\"staging\",\"production\"]"
-              SHOULD_RUN=true
             elif [ "${{ inputs.event_name }}" = "push" ] && [[ "$BRANCH" == dev/* ]]; then
-              ACTION="plan"
+              TF_ACTION="apply"
               ENVIRONMENTS="[\"dev\"]"
-              SHOULD_RUN=true
             else
               ENVIRONMENTS="[]"
-              ACTION="plan"
-              SHOULD_RUN=false
+              TF_ACTION="plan"
             fi
           fi
 
           # Set outputs
           echo "environments=$ENVIRONMENTS" >> $GITHUB_OUTPUT
-          echo "action=$ACTION" >> $GITHUB_OUTPUT
-          echo "should_run=$SHOULD_RUN" >> $GITHUB_OUTPUT
+          echo "tf_action=$TF_ACTION" >> $GITHUB_OUTPUT
