@@ -1,0 +1,71 @@
+name: Destroy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: "Choose an environment to destroy"
+        required: true
+        options:
+          - dev
+          - staging
+          - prod
+      confirmation:
+        description: 'Type "DESTROY" to confirm infrastructure destruction'
+        required: true
+        type: string
+
+jobs:
+  validate-confirmation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate confirmation
+        run: |
+          if [ "${{ inputs.confirmation }}" != "DESTROY" ]; then
+            echo "Confirmation failed. You must type 'destroy' to proceed."
+            exit 1
+          fi
+          echo "Confirmation validated"
+  
+  destroy-dev:
+    needs: validate-confirmation
+    if: inputs.environment == 'dev'
+    uses: carlssonk/terraform-modules/.github/workflows/destroy.yml@main
+    with:
+      environment: dev
+      aws_region: ${{ vars.AWS_REGION }}
+      organization: ${{ vars.ORGANIZATION }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_DEV }}
+      tf_root_directory: ./terraform/environments/dev
+
+  destroy-staging:
+    needs: validate-confirmation
+    if: inputs.environment == 'staging'
+    uses: carlssonk/terraform-modules/.github/workflows/destroy.yml@main
+    with:
+      environment: staging
+      aws_region: ${{ vars.AWS_REGION }}
+      organization: ${{ vars.ORGANIZATION }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_STAGING }}
+      tf_root_directory: ./terraform/environments/staging-and-prod
+
+  destroy-prod-environments:
+    needs: validate-confirmation
+    if: inputs.environment == 'prod'
+    strategy:
+      matrix:
+        include:
+          - name: Infrastructure - Production
+            tf_root_directory: ./terraform/environments/staging-and-prod
+          - name: Cloudflare
+            tf_root_directory: ./terraform/environments/cloudflare
+    uses: carlssonk/terraform-modules/.github/workflows/destroy.yml@main
+    with:
+      environment: prod
+      aws_region: ${{ vars.AWS_REGION }}
+      organization: ${{ vars.ORGANIZATION }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_PROD }}
+      tf_root_directory: ${{ matrix.tf_root_directory }}
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

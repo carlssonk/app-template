@@ -1,0 +1,81 @@
+name: Deployment Config
+
+on:
+  workflow_call:
+    inputs:
+      event_name:
+        required: true
+        type: string
+      branch:
+        required: true
+        type: string
+      workflow_dispatch_environment:
+        required: false
+        type: string
+        default: ''
+      workflow_dispatch_action:
+        required: false
+        type: string
+        default: ''
+    outputs:
+      environments:
+        description: "Environments to deploy"
+        value: ${{ jobs.strategy.outputs.environments }}
+      action:
+        description: "Action to perform (plan or apply)"
+        value: ${{ jobs.strategy.outputs.action }}
+      should_run:
+        description: "Whether workflow should run"
+        value: ${{ jobs.strategy.outputs.should_run }}
+
+jobs:
+  strategy:
+    name: Trunk Strategy
+    runs-on: ubuntu-latest
+    outputs:
+      environments: ${{ steps.set-config.outputs.environments }}
+      action: ${{ steps.set-config.outputs.action }}
+      should_run: ${{ steps.set-config.outputs.should_run }}
+    steps:
+      - id: set-config
+        run: |
+          # Handle manual workflow_dispatch trigger
+          if [ "${{ inputs.event_name }}" = "workflow_dispatch" ]; then
+            ACTION="${{ inputs.workflow_dispatch_action }}"
+            ENVIRONMENTS="[\"${{ inputs.workflow_dispatch_environment }}\"]"
+            SHOULD_RUN=true
+          else
+            BRANCH="${{ inputs.branch }}"
+            
+            # Determine environments and action based on event and branch
+            if [ "${{ inputs.event_name }}" = "pull_request" ]; then
+              ACTION="plan"
+              if [ "$BRANCH" = "main" ]; then
+                ENVIRONMENTS="[\"staging\",\"prod\"]"
+                SHOULD_RUN=true
+              elif [[ "$BRANCH" == dev/* ]]; then
+                ENVIRONMENTS="[\"dev\"]"
+                SHOULD_RUN=true
+              else
+                ENVIRONMENTS="[]"
+                SHOULD_RUN=false
+              fi
+            elif [ "${{ inputs.event_name }}" = "push" ] && [ "$BRANCH" = "main" ]; then
+              ACTION="apply"
+              ENVIRONMENTS="[\"staging\",\"prod\"]"
+              SHOULD_RUN=true
+            elif [ "${{ inputs.event_name }}" = "push" ] && [[ "$BRANCH" == dev/* ]]; then
+              ACTION="plan"
+              ENVIRONMENTS="[\"dev\"]"
+              SHOULD_RUN=true
+            else
+              ENVIRONMENTS="[]"
+              ACTION="plan"
+              SHOULD_RUN=false
+            fi
+          fi
+
+          # Set outputs
+          echo "environments=$ENVIRONMENTS" >> $GITHUB_OUTPUT
+          echo "action=$ACTION" >> $GITHUB_OUTPUT
+          echo "should_run=$SHOULD_RUN" >> $GITHUB_OUTPUT

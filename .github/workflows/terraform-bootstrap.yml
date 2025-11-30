@@ -1,0 +1,24 @@
+name: Bootstrap Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: "Choose an environment to bootstrap"
+        required: true
+        options:
+          - dev
+          - staging
+          - prod
+
+jobs:
+  call-workflow:
+    uses: carlssonk/terraform-modules/.github/workflows/bootstrap.yml@main
+    with:
+      environment: ${{ inputs.environment }}
+      aws_region: ${{ vars.AWS_REGION }}
+      organization: ${{ vars.ORGANIZATION }}
+    secrets:
+      BOOTSTRAP_AWS_ACCESS_KEY: ${{ secrets.BOOTSTRAP_AWS_ACCESS_KEY }}
+      BOOTSTRAP_AWS_ACCESS_SECRET: ${{ secrets.BOOTSTRAP_AWS_ACCESS_SECRET }}
