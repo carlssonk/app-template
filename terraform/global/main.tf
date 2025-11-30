@@ -13,7 +13,6 @@ provider "cloudflare" {
   api_token = var.cloudflare_api_token
 }
 
-# Zone settings for carlssonk.se
 module "carlssonk_se_zone" {
   source    = "github.com/carlssonk/terraform-modules//modules/cloudflare-zone?ref=main"
   zone_name = "carlssonk.se"
