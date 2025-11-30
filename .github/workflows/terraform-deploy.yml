@@ -91,22 +91,25 @@ jobs:
       needs.deployment-strategy.outputs.should_run == 'true' &&
       contains(fromJson(needs.deployment-strategy.outputs.environments), 'production') &&
       (needs.deployment-strategy.outputs.action == 'plan' || needs.approve-deployment.result == 'success')
-    permissions:
-      contents: write
-      id-token: write
     strategy:
       matrix:
         include:
           - name: Production
             tf_root_directory: ./terraform/environments/staging-and-production
+            state_key: terraform.tfstate
           - name: Global
             tf_root_directory: ./terraform/global
+            state_key: global.tfstate
+    permissions:
+      contents: write
+      id-token: write
     uses: carlssonk/terraform-modules/.github/workflows/deploy.yml@main
     with:
       environment: production
       aws_region: ${{ vars.AWS_REGION }}
       aws_account_id: ${{ vars.AWS_ACCOUNT_ID_PRODUCTION }}
       tf_root_directory: ${{ matrix.tf_root_directory }}
+      state_key: ${{ matrix.state_key }}
       action: ${{ needs.deployment-strategy.outputs.action }}
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
