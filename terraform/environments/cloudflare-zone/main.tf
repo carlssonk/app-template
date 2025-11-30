@@ -1,3 +1,6 @@
+terraform {
+  backend "s3" {}
+}
 
 module "cloudflare_zone" {
   source       = "github.com/carlssonk/terraform-modules//modules/cloudflare-zone?ref=main"

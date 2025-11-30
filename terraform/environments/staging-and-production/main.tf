@@ -1,3 +1,7 @@
+terraform {
+  backend "s3" {}
+}
+
 module "website" {
   source      = "github.com/carlssonk/terraform-modules//compositions/cloudflare-cdn-website?ref=main"
   root_domain = "carlssonk.se"
