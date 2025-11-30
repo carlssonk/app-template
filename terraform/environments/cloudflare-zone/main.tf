@@ -1,6 +1,6 @@
 
 module "cloudflare_zone" {
-  source       = "github.com/carlssonk/terraform-modules//compositions/cloudflare-zone?ref=main"
+  source       = "github.com/carlssonk/terraform-modules//modules/cloudflare-zone?ref=main"
   environments = ["production"]
   apps = {
     website = {
