@@ -1,73 +1,121 @@
-# React + TypeScript + Vite
+# App Template
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A **simple** production-ready template for deploying Frontend applications to AWS S3 + Cloudflare Workers & CDN, focusing on automated CI/CD pipelines and infrastructure as code.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This repository provides a complete setup for modern web application deployment with:
 
-## React Compiler
+- **Frontend**: Scaffolded vite-react-typescript app
+- **Infrastructure**: Terraform-managed AWS S3 + Cloudflare Workers & CDN
+- **CI/CD**: GitHub Actions workflows for automated deployments, rollbacks, and releases
+- **Multi-Environment**: Support for dev, staging, and production environments
+- **Versioned Deployments**: Immutable deployments with rollback capabilities
+- **Security**: OIDC authentication for AWS (no long-lived credentials)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Deployment Philosophy
 
-## Expanding the ESLint configuration
+This template is built around **trunk-based development** principles:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Single Branch Deployments** - All changes merge to `main` and deploy automatically to production
+- **Gradual Rollouts** - Cloudflare Workers enable progressive traffic shifting between versions (e.g., 90% old version, 10% new version)
+- **Fast Rollbacks** - Instant rollback to any previous deployment without rebuilding
+- **Immutable Deployments** - Each commit creates a versioned deployment in S3, never overwritten
+- **Confidence Through Testing in Production** - Gradual rollouts let you test new versions with real traffic before full deployment
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+The Cloudflare Worker acts as an intelligent router, enabling gradual rollouts at the infrastructure level. This complements app-level feature flags: use the Worker for large changes (framework upgrades, breaking changes) and app flags for smaller features.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Setup Guide
+
+This guide will help you configure the repository after cloning.
+
+## GitHub Actions Configuration
+
+### 1. Create Environments
+
+Go to **Settings** → **Environments** and create the following environments:
+
+- `dev` (Optional)
+- `staging` (Optional)
+- `production`
+- `infra-approval` (Optional but recommended; used for manual approval of production infrastructure changes)
+
+Recommended Protection Rules for **infra-approval**:
+- Required reviewers (add yourself or team members)
+
+### 2. Configure Environment Variables
+
+For **each environment** (dev, staging, production), go to **Settings** → **Environments** → select environment → **Variables** and add:
+
+| Variable Name | Description | Example Value |
+|--------------|-------------|---------------|
+| `AWS_ACCOUNT_ID` | AWS account ID for this environment | `123456789012` |
+| `S3_BUCKET` | S3 bucket name for this environment | `staging.yourdomain.com` |
+
+**Example values per environment:**
+- **Dev**: `S3_BUCKET` = `dev.yourdomain.com`
+- **Staging**: `S3_BUCKET` = `staging.yourdomain.com`
+- **Production**: `S3_BUCKET` = `www.yourdomain.com`
+
+### 3. Configure Environment Secrets
+
+For **each environment** (dev, staging, production), go to **Settings** → **Environments** → select environment → **Secrets** and add:
+
+| Secret Name | Description | How to Get |
+|------------|-------------|------------|
+| `BOOTSTRAP_AWS_ACCESS_KEY` | AWS access key for initial Terraform setup | Create IAM user with admin permissions |
+| `BOOTSTRAP_AWS_ACCESS_SECRET` | AWS secret key for initial Terraform setup | From the same IAM user |
+
+**Note:** Bootstrap secrets are only needed for the initial Terraform state setup. After bootstrap, workflows use OIDC for AWS authentication.
+
+### 4. Configure Repository Variables
+
+Go to **Settings** → **Secrets and variables** → **Actions** → **Variables** tab and create:
+
+| Variable Name | Description | Example Value |
+|--------------|-------------|---------------|
+| `AWS_REGION` | AWS region for all environments | `eu-north-1` |
+
+### 5. Configure Repository Secrets
+
+Go to **Settings** → **Secrets and variables** → **Actions** → **Secrets** tab and create:
+
+| Secret Name | Description | How to Get |
+|------------|-------------|------------|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token for DNS/Workers | Create at Cloudflare Dashboard → My Profile → API Tokens |
+
+**Note:** Make sure your Cloudflare API token has permissions for Workers and DNS.
+
+## Terraform Configuration
+
+Update the following files with your own values:
+
+### `terraform/environments/staging-and-production/staging.tfvars`
+```hcl
+environment = "staging"
+root_domain = "yourdomain.com"                    # Change this
+subdomain = "staging.app-template"                # Change this
+cloudflare_account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"  # Change this
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### `terraform/environments/staging-and-production/production.tfvars`
+```hcl
+environment = "production"
+root_domain = "yourdomain.com"                    # Change this
+subdomain = "app-template"                        # Change this
+cloudflare_account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"  # Change this
 ```
+
+## Quick Start
+
+1. Create GitHub environments (dev, staging, production, infra-approval)
+2. Configure environment variables for each environment (AWS_ACCOUNT_ID, S3_BUCKET)
+3. Configure environment secrets for each environment (BOOTSTRAP_AWS_*)
+4. Configure repository variables (AWS_REGION)
+5. Configure repository secrets (CLOUDFLARE_API_TOKEN)
+6. Update the Terraform `.tfvars` files with your domain and Cloudflare account ID
+7. Run the Terraform bootstrap workflow to set up remote state
+8. Deploy infrastructure using the Terraform deploy workflow
+9. Deploy the app using the app deploy workflow
