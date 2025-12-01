@@ -24,6 +24,7 @@ jobs:
   deploy:
     name: Deploy App - ${{ inputs.environment }}
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     outputs:
       commit_hash: ${{ steps.current.outputs.hash }}
     permissions:
