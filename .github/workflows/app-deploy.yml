@@ -27,6 +27,9 @@ jobs:
       false &&
       github.event_name == 'workflow_dispatch' && 
       github.event.inputs.environment == 'dev'
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/_app-deploy-job.yml
     with:
       environment: dev
@@ -38,6 +41,9 @@ jobs:
     needs: deployment-strategy
     # Disabled
     if: false && contains(fromJson(needs.deployment-strategy.outputs.environments), 'staging')
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/_app-deploy-job.yml
     with:
       environment: staging
@@ -48,6 +54,9 @@ jobs:
   deploy-production:
     needs: deployment-strategy
     if: contains(fromJson(needs.deployment-strategy.outputs.environments), 'production')
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/_app-deploy-job.yml
     with:
       environment: production
