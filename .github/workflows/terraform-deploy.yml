@@ -42,7 +42,7 @@ jobs:
     if: |
       needs.deployment-strategy.outputs.tf_action == 'apply' && 
       contains(fromJson(needs.deployment-strategy.outputs.environments), 'production')
-    uses: ./.github/workflows/reusable/deploy-production.yml
+    uses: ./.github/workflows/reusable/terraform-deploy-production-job.yml
     with:
       action: plan
 
@@ -74,6 +74,8 @@ jobs:
       aws_account_id: ${{ vars.AWS_ACCOUNT_ID_DEV }}
       tf_root_directory: ./terraform/environments/dev
       action: ${{ needs.deployment-strategy.outputs.tf_action }}
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
   plan-or-apply-staging:
     name: ${{ needs.deployment-strategy.outputs.tf_action == 'plan' && 'Plan' || 'Deploy' }} Infrastructure - Staging
@@ -90,6 +92,8 @@ jobs:
       aws_account_id: ${{ vars.AWS_ACCOUNT_ID_STAGING }}
       tf_root_directory: ./terraform/environments/staging-and-production
       action: ${{ needs.deployment-strategy.outputs.tf_action }}
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
   apply-production-environments:
     needs: [deployment-strategy, approve-deployment]
@@ -98,6 +102,6 @@ jobs:
       contains(fromJson(needs.deployment-strategy.outputs.environments), 'production') &&
       needs.deployment-strategy.outputs.tf_action == 'apply' &&
       needs.approve-deployment.result == 'success'
-    uses: ./.github/workflows/reusable/deploy-production.yml
+    uses: ./.github/workflows/reusable/terraform-deploy-production-job.yml
     with:
       action: apply

@@ -1,4 +1,4 @@
-name: Deployment Config
+name: Deployment Config (Reusable)
 
 on:
   workflow_call:
