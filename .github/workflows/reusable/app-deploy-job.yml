@@ -34,11 +34,22 @@ jobs:
         role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/github-actions-cicd-role
         aws-region: ${{ inputs.aws_region }}
 
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 10
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+
     - name: Install dependencies
-      run: npm ci
+      run: pnpm install --frozen-lockfile
 
     - name: Build
-      run: npm run build
+      run: pnpm run build
 
     - name: Deploy to S3
       run: |
