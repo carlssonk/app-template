@@ -18,7 +18,7 @@ jobs:
     with:
       environment: ${{ inputs.environment }}
       aws_region: ${{ vars.AWS_REGION }}
-      organization: carlssonk # your Github username/organization
+      organization: ${{ github.repository_owner }}
     secrets:
       BOOTSTRAP_AWS_ACCESS_KEY: ${{ secrets.BOOTSTRAP_AWS_ACCESS_KEY }}
       BOOTSTRAP_AWS_ACCESS_SECRET: ${{ secrets.BOOTSTRAP_AWS_ACCESS_SECRET }}

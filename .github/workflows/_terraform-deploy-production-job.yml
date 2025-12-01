@@ -11,6 +11,7 @@ on:
 jobs:
   deploy:
     name: ${{ inputs.action == 'plan' && 'Plan' || 'Deploy' }} ${{ matrix.name }}
+    environment: production
     strategy:
       matrix:
         include:
@@ -27,7 +28,7 @@ jobs:
     with:
       environment: production
       aws_region: ${{ vars.AWS_REGION }}
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_PRODUCTION }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
       tf_root_directory: ${{ matrix.tf_root_directory }}
       state_key: ${{ matrix.state_key }}
       action: ${{ inputs.action }}
