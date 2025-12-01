@@ -28,6 +28,9 @@ function App() {
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
+      <p style={{ fontSize: '0.8em', opacity: 0.5, marginTop: '2rem' }}>
+        Version: {__COMMIT_HASH__}
+      </p>
     </>
   )
 }
