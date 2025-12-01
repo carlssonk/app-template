@@ -30,7 +30,7 @@ on:
 
 jobs:
   deployment-strategy:
-    uses: ./.github/workflows/reusable/trunk-config.yml
+    uses: ./.github/workflows/_trunk-config.yml
     with:
       event_name: ${{ github.event_name }}
       branch: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
@@ -42,7 +42,7 @@ jobs:
     if: |
       needs.deployment-strategy.outputs.tf_action == 'apply' && 
       contains(fromJson(needs.deployment-strategy.outputs.environments), 'production')
-    uses: ./.github/workflows/reusable/terraform-deploy-production-job.yml
+    uses: ./.github/workflows/_terraform-deploy-production-job.yml
     with:
       action: plan
 
@@ -102,6 +102,6 @@ jobs:
       contains(fromJson(needs.deployment-strategy.outputs.environments), 'production') &&
       needs.deployment-strategy.outputs.tf_action == 'apply' &&
       needs.approve-deployment.result == 'success'
-    uses: ./.github/workflows/reusable/terraform-deploy-production-job.yml
+    uses: ./.github/workflows/_terraform-deploy-production-job.yml
     with:
       action: apply
