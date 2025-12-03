@@ -21,38 +21,43 @@ on:
           - dev
       tf_action:
         type: choice
-        description: "Action to perform"
+        description: "Terraform action to perform"
         required: true
         default: plan
         options:
           - plan
           - apply
 
+concurrency:
+  group: terraform-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  deployment-strategy:
-    uses: ./.github/workflows/_trunk-config.yml
+  route:
+    uses: carlssonk/cicd-toolkit/.github/workflows/deployment-router-trunk.yml@main
     with:
       event_name: ${{ github.event_name }}
       branch: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
       workflow_dispatch_environment: ${{ github.event.inputs.environment }}
-      workflow_dispatch_tf_action: ${{ github.event.inputs.tf_action }}
 
-  plan-production-environments:
-    needs: deployment-strategy
+  # Plan before applying so the approver can check what he is approving
+  plan-production:
+    needs: route
     if: |
-      needs.deployment-strategy.outputs.tf_action == 'apply' && 
-      contains(fromJson(needs.deployment-strategy.outputs.environments), 'production')
-    uses: ./.github/workflows/_terraform-deploy-production-job.yml
+      contains(fromJson(needs.route.outputs.environments), 'production') &&
+      needs.route.outputs.tf_action == 'apply'
+    uses: ./.github/workflows/_terraform-deploy-production.yml
     with:
       action: plan
 
   approve-deployment:
     name: Approve Deployment
     runs-on: ubuntu-latest
-    needs: [deployment-strategy, plan-production-environments]
+    timeout-minutes: 1440  # 24 hours
+    needs: [route, plan-production]
     if: |
-      needs.deployment-strategy.outputs.tf_action == 'apply' && 
-      contains(fromJson(needs.deployment-strategy.outputs.environments), 'production')
+      contains(fromJson(needs.route.outputs.environments), 'production') &&
+      needs.route.outputs.tf_action == 'apply'
     environment:
       name: infra-approval
     steps:
@@ -60,50 +65,47 @@ jobs:
         run: echo "Deployment approved"
 
   plan-or-apply-dev:
-    name: ${{ needs.deployment-strategy.outputs.tf_action == 'plan' && 'Plan' || 'Deploy' }} Infrastructure - Development
-    needs: deployment-strategy
+    name: ${{ needs.route.outputs.tf_action == 'plan' && 'Plan' || 'Deploy' }} Infrastructure - Development
+    needs: route
     # Disabled
-    if: false && contains(fromJson(needs.deployment-strategy.outputs.environments), 'dev')
-    environment: dev
-    permissions:
-      contents: write
-      id-token: write
+    if: false && contains(fromJson(needs.route.outputs.environments), 'dev')
     uses: carlssonk/terraform-modules/.github/workflows/deploy.yml@main
     with:
       environment: dev
       aws_region: ${{ vars.AWS_REGION }}
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_DEV }}
       tf_root_directory: ./terraform/environments/dev
-      action: ${{ needs.deployment-strategy.outputs.tf_action }}
+      action: ${{ needs.route.outputs.tf_action }}
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-  plan-or-apply-staging:
-    name: ${{ needs.deployment-strategy.outputs.tf_action == 'plan' && 'Plan' || 'Deploy' }} Infrastructure - Staging
-    needs: deployment-strategy
-    # Disabled
-    if: contains(fromJson(needs.deployment-strategy.outputs.environments), 'staging')
-    environment: staging
     permissions:
       contents: write
       id-token: write
+
+  plan-or-apply-staging:
+    name: ${{ needs.route.outputs.tf_action == 'plan' && 'Plan' || 'Deploy' }} Infrastructure - Staging
+    needs: route
+    # Disabled
+    if: false && contains(fromJson(needs.route.outputs.environments), 'staging')
     uses: carlssonk/terraform-modules/.github/workflows/deploy.yml@main
     with:
       environment: staging
       aws_region: ${{ vars.AWS_REGION }}
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_STAGING }}
       tf_root_directory: ./terraform/environments/staging-and-production
-      action: ${{ needs.deployment-strategy.outputs.tf_action }}
+      action: ${{ needs.route.outputs.tf_action }}
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    permissions:
+      contents: write
+      id-token: write
 
-  apply-production-environments:
-    needs: [deployment-strategy, approve-deployment]
+  apply-production:
+    needs: [route, approve-deployment]
     if: |
-      always() &&
-      contains(fromJson(needs.deployment-strategy.outputs.environments), 'production') &&
-      needs.deployment-strategy.outputs.tf_action == 'apply' &&
+      contains(fromJson(needs.route.outputs.environments), 'production') &&
+      needs.route.outputs.tf_action == 'apply' &&
       needs.approve-deployment.result == 'success'
-    uses: ./.github/workflows/_terraform-deploy-production-job.yml
+    uses: ./.github/workflows/_terraform-deploy-production.yml
     with:
       action: apply

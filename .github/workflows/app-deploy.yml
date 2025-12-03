@@ -15,54 +15,60 @@ on:
         options:
           - dev
 
+concurrency:
+  group: deploy-app-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  deployment-strategy:
-    uses: ./.github/workflows/_trunk-config.yml
+  route:
+    uses: carlssonk/cicd-toolkit/.github/workflows/deployment-router-trunk.yml@main
     with:
       event_name: ${{ github.event_name }}
       branch: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
       workflow_dispatch_environment: ${{ github.event.inputs.environment }}
 
   deploy-dev:
-    needs: deployment-strategy
+    needs: route
     # Disabled
     if: |
       false &&
       github.event_name == 'workflow_dispatch' && 
       github.event.inputs.environment == 'dev'
-    uses: ./.github/workflows/_app-deploy-job.yml
+    uses: carlssonk/cicd-toolkit/.github/workflows/deploy-s3.yml@main
     with:
       environment: dev
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
       aws_region: ${{ vars.AWS_REGION }}
-      s3_bucket: ${{ vars.S3_BUCKET }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_DEV }}
+      s3_bucket: ${{ vars.S3_BUCKET_DEV }}
     permissions:
       id-token: write
       contents: read
 
   deploy-staging:
-    needs: deployment-strategy
+    needs: route
     # Disabled
-    if: false && contains(fromJson(needs.deployment-strategy.outputs.environments), 'staging')
-    uses: ./.github/workflows/_app-deploy-job.yml
+    if: false && contains(fromJson(needs.route.outputs.environments), 'staging')
+    uses: carlssonk/cicd-toolkit/.github/workflows/deploy-s3.yml@main
     with:
       environment: staging
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
       aws_region: ${{ vars.AWS_REGION }}
-      s3_bucket: ${{ vars.S3_BUCKET }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_STAGING }}
+      aws_role_arn: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID_STAGING }}:role/github-actions-cicd-role
+      s3_bucket: ${{ vars.S3_BUCKET_STAGING }}
     permissions:
       id-token: write
       contents: read
 
   deploy-production:
-    needs: deployment-strategy
-    if: contains(fromJson(needs.deployment-strategy.outputs.environments), 'production')
-    uses: ./.github/workflows/_app-deploy-job.yml
+    needs: route
+    if: contains(fromJson(needs.route.outputs.environments), 'production')
+    uses: carlssonk/cicd-toolkit/.github/workflows/deploy-s3.yml@main
     with:
       environment: production
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
       aws_region: ${{ vars.AWS_REGION }}
-      s3_bucket: ${{ vars.S3_BUCKET }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_PRODUCTION }}
+      aws_role_arn: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID_PRODUCTION }}:role/github-actions-cicd-role
+      s3_bucket: ${{ vars.S3_BUCKET_PRODUCTION }}
     permissions:
       id-token: write
       contents: read
@@ -70,9 +76,11 @@ jobs:
   create-release:
     needs: deploy-production
     if: needs.deploy-production.result == 'success'
-    permissions:
-      contents: write
-    uses: ./.github/workflows/_create-release-tag.yml
+    uses: carlssonk/cicd-toolkit/.github/workflows/create-release.yml@main
     with:
       environment: production
       commit_hash: ${{ needs.deploy-production.outputs.commit_hash }}
+      tag_prefix: release
+      generate_changelog: true
+    permissions:
+      contents: write
