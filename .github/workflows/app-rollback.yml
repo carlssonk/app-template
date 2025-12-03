@@ -20,25 +20,39 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  rollback:
+  rollback-staging:
+    if: inputs.environment == 'staging'
     uses: carlssonk/cicd-toolkit/.github/workflows/rollback-s3.yml@main
     with:
       environment: ${{ inputs.environment }}
       aws_region: ${{ vars.AWS_REGION }}
-      aws_role_arn: arn:aws:iam::${{ vars[format('AWS_ACCOUNT_ID_{0}', upper(inputs.environment))] }}:role/github-actions-role
-      s3_bucket: ${{ vars[format('S3_BUCKET_{0}', upper(inputs.environment))] }}
+      aws_role_arn: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID_STAGING }}:role/github-actions-role
+      s3_bucket: ${{ vars.S3_BUCKET_STAGING }}
+      target_commit_hash: ${{ inputs.commit_hash }}
+    permissions:
+      id-token: write
+      contents: read
+
+  rollback-production:
+    if: inputs.environment == 'production'
+    uses: carlssonk/cicd-toolkit/.github/workflows/rollback-s3.yml@main
+    with:
+      environment: ${{ inputs.environment }}
+      aws_region: ${{ vars.AWS_REGION }}
+      aws_role_arn: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID_PRODUCTION }}:role/github-actions-role
+      s3_bucket: ${{ vars.S3_BUCKET_PRODUCTION }}
       target_commit_hash: ${{ inputs.commit_hash }}
     permissions:
       id-token: write
       contents: read
 
   create-release-tag:
-    needs: rollback
-    if: needs.rollback.result == 'success'
+    needs: rollback-production
+    if: needs.rollback-production.result == 'success'
     uses: carlssonk/cicd-toolkit/.github/workflows/create-release.yml@main
     with:
-      environment: ${{ inputs.environment }}
-      commit_hash: ${{ needs.rollback.outputs.target_commit_hash }}
+      environment: production
+      commit_hash: ${{ needs.rollback-production.outputs.target_commit_hash }}
       tag_prefix: rollback
       generate_changelog: false
     permissions:
