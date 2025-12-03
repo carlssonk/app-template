@@ -38,7 +38,6 @@ jobs:
     with:
       environment: dev
       aws_region: ${{ vars.AWS_REGION }}
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_DEV }}
       aws_role_arn: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID_DEV }}:role/github-actions-cicd-role
       s3_bucket: ${{ vars.S3_BUCKET_DEV }}
     permissions:
@@ -53,7 +52,6 @@ jobs:
     with:
       environment: staging
       aws_region: ${{ vars.AWS_REGION }}
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_STAGING }}
       aws_role_arn: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID_STAGING }}:role/github-actions-cicd-role
       s3_bucket: ${{ vars.S3_BUCKET_STAGING }}
     permissions:
@@ -67,7 +65,6 @@ jobs:
     with:
       environment: production
       aws_region: ${{ vars.AWS_REGION }}
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_PRODUCTION }}
       aws_role_arn: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID_PRODUCTION }}:role/github-actions-cicd-role
       s3_bucket: ${{ vars.S3_BUCKET_PRODUCTION }}
     permissions:
