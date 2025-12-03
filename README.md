@@ -45,19 +45,19 @@ Go to **Settings** → **Environments** and create the following environments:
 Recommended Protection Rules for **infra-approval**:
 - Required reviewers (add yourself or team members)
 
-### 2. Configure Environment Variables
+### 2. Configure Repository Variables
 
-For **each environment** (dev, staging, production), go to **Settings** → **Environments** → select environment → **Variables** and add:
+Go to **Settings** → **Secrets and variables** → **Actions** → **Variables** tab and create variables with environment suffixes:
 
 | Variable Name | Description | Example Value |
 |--------------|-------------|---------------|
-| `AWS_ACCOUNT_ID` | AWS account ID for this environment | `123456789012` |
-| `S3_BUCKET` | S3 bucket name for this environment | `staging.yourdomain.com` |
-
-**Example values per environment:**
-- **Dev**: `S3_BUCKET` = `dev.yourdomain.com`
-- **Staging**: `S3_BUCKET` = `staging.yourdomain.com`
-- **Production**: `S3_BUCKET` = `www.yourdomain.com`
+| `AWS_ACCOUNT_ID_DEV` | AWS account ID for dev environment | `123456789012` |
+| `AWS_ACCOUNT_ID_STAGING` | AWS account ID for staging environment | `123456789012` |
+| `AWS_ACCOUNT_ID_PRODUCTION` | AWS account ID for production environment | `123456789012` |
+| `S3_BUCKET_DEV` | S3 bucket name for dev environment | `dev.yourdomain.com` |
+| `S3_BUCKET_STAGING` | S3 bucket name for staging environment | `staging.yourdomain.com` |
+| `S3_BUCKET_PRODUCTION` | S3 bucket name for production environment | `www.yourdomain.com` |
+| `AWS_REGION` | AWS region for all environments | `eu-north-1` |
 
 ### 3. Configure Environment Secrets
 
@@ -70,15 +70,8 @@ For **each environment** (dev, staging, production), go to **Settings** → **En
 
 **Note:** Bootstrap secrets are only needed for the initial Terraform state setup. After bootstrap, workflows use OIDC for AWS authentication.
 
-### 4. Configure Repository Variables
 
-Go to **Settings** → **Secrets and variables** → **Actions** → **Variables** tab and create:
-
-| Variable Name | Description | Example Value |
-|--------------|-------------|---------------|
-| `AWS_REGION` | AWS region for all environments | `eu-north-1` |
-
-### 5. Configure Repository Secrets
+### 4. Configure Repository Secrets
 
 Go to **Settings** → **Secrets and variables** → **Actions** → **Secrets** tab and create:
 
@@ -111,11 +104,10 @@ cloudflare_account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"  # Change this
 ## Quick Start
 
 1. Create GitHub environments (dev, staging, production, infra-approval)
-2. Configure environment variables for each environment (AWS_ACCOUNT_ID, S3_BUCKET)
-3. Configure environment secrets for each environment (BOOTSTRAP_AWS_*)
-4. Configure repository variables (AWS_REGION)
-5. Configure repository secrets (CLOUDFLARE_API_TOKEN)
-6. Update the Terraform `.tfvars` files with your domain and Cloudflare account ID
-7. Run the Terraform bootstrap workflow to set up remote state
-8. Deploy infrastructure using the Terraform deploy workflow
-9. Deploy the app using the app deploy workflow
+2. Configure repository variables with environment suffixes (AWS_ACCOUNT_ID_*, S3_BUCKET_*, AWS_REGION)
+3. Configure environment secrets for each environment (BOOTSTRAP_AWS_ACCESS_KEY & BOOTSTRAP_AWS_ACCESS_SECRET)
+4. Configure repository secrets (CLOUDFLARE_API_TOKEN)
+5. Update the Terraform `.tfvars` files with your domain and Cloudflare account ID
+6. Run the Terraform bootstrap workflow to set up remote state
+7. Deploy infrastructure using the Terraform deploy workflow
+8. Deploy the app using the app deploy workflow
