@@ -2,110 +2,88 @@ name: Deploy Infrastructure
 
 on:
   push:
-    branches: [main, dev/*]
+    branches: [main, dev]
     paths:
       - '**.tf'
       - '**.tfvars'
   pull_request:
-    branches: [main, dev/*]
+    branches: [main, dev]
     paths:
       - '**.tf'
       - '**.tfvars'
-  workflow_dispatch:
-    inputs:
-      environment:
-        type: choice
-        description: "Environment to deploy"
-        required: true
-        options:
-          - dev
-      tf_action:
-        type: choice
-        description: "Terraform action to perform"
-        required: true
-        default: plan
-        options:
-          - plan
-          - apply
 
 concurrency:
   group: terraform-deploy-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  route:
-    uses: carlssonk/cicd-toolkit/.github/workflows/deployment-router-trunk.yml@main
-    with:
-      event_name: ${{ github.event_name }}
-      branch: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
-      workflow_dispatch_environment: ${{ github.event.inputs.environment }}
-
-  # Plan before applying so the approver can check what he is approving
-  plan-production:
-    needs: route
+  deploy-dev:
+    name: ${{ github.event_name == 'pull_request' && 'Plan' || 'Apply' }} Infrastructure - Development
     if: |
-      contains(fromJson(needs.route.outputs.environments), 'production') &&
-      needs.route.outputs.tf_action == 'apply'
-    uses: ./.github/workflows/_terraform-deploy-production.yml
-    with:
-      action: plan
-
-  approve-deployment:
-    name: Approve Deployment
-    runs-on: ubuntu-latest
-    timeout-minutes: 1440  # 24 hours
-    needs: [route, plan-production]
-    if: |
-      contains(fromJson(needs.route.outputs.environments), 'production') &&
-      needs.route.outputs.tf_action == 'apply'
-    environment:
-      name: infra-approval
-    steps:
-      - name: Wait for manual approval
-        run: echo "Deployment approved"
-
-  plan-or-apply-dev:
-    name: ${{ needs.route.outputs.tf_action == 'plan' && 'Plan' || 'Deploy' }} Infrastructure - Development
-    needs: route
-    # Disabled
-    if: false && contains(fromJson(needs.route.outputs.environments), 'dev')
+      (github.event_name == 'pull_request' && github.base_ref == 'dev') ||
+      (github.event_name == 'push' && github.ref_name == 'dev')
     uses: carlssonk/terraform-modules/.github/workflows/deploy.yml@main
     with:
       environment: dev
       aws_region: ${{ vars.AWS_REGION }}
       aws_account_id: ${{ vars.AWS_ACCOUNT_ID_DEV }}
       tf_root_directory: ./terraform/environments/dev
-      action: ${{ needs.route.outputs.tf_action }}
+      action: ${{ github.event_name == 'pull_request' && 'plan' || 'apply' }}
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     permissions:
       contents: write
       id-token: write
 
-  plan-or-apply-staging:
-    name: ${{ needs.route.outputs.tf_action == 'plan' && 'Plan' || 'Deploy' }} Infrastructure - Staging
-    needs: route
-    # Disabled
-    if: false && contains(fromJson(needs.route.outputs.environments), 'staging')
+  deploy-staging:
+    name: ${{ github.event_name == 'pull_request' && 'Plan' || 'Apply' }} Infrastructure - Staging
+    if: |
+      (github.event_name == 'pull_request' && github.base_ref == 'main') ||
+      (github.event_name == 'push' && github.ref_name == 'main')
     uses: carlssonk/terraform-modules/.github/workflows/deploy.yml@main
     with:
       environment: staging
       aws_region: ${{ vars.AWS_REGION }}
       aws_account_id: ${{ vars.AWS_ACCOUNT_ID_STAGING }}
       tf_root_directory: ./terraform/environments/staging-and-production
-      action: ${{ needs.route.outputs.tf_action }}
+      action: ${{ github.event_name == 'pull_request' && 'plan' || 'apply' }}
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     permissions:
       contents: write
       id-token: write
 
-  apply-production:
-    needs: [route, approve-deployment]
+  plan-production:
+    name: Plan Production
     if: |
-      contains(fromJson(needs.route.outputs.environments), 'production') &&
-      needs.route.outputs.tf_action == 'apply' &&
-      needs.approve-deployment.result == 'success'
+      (github.event_name == 'pull_request' && github.base_ref == 'main') ||
+      (github.event_name == 'push' && github.ref_name == 'main')
+    uses: ./.github/workflows/_terraform-deploy-production.yml
+    with:
+      action: plan
+    permissions:
+      contents: write
+      id-token: write
+
+  approve-production:
+    name: Approve Production Deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 1440  # 24 hours
+    needs: plan-production
+    if: github.event_name == 'push' && github.ref_name == 'main'
+    environment:
+      name: infra-approval
+    steps:
+      - name: Wait for manual approval
+        run: echo "Deployment approved"
+
+  apply-production:
+    name: Apply Production
+    needs: approve-production
+    if: github.event_name == 'push' && github.ref_name == 'main'
     uses: ./.github/workflows/_terraform-deploy-production.yml
     with:
       action: apply
+    permissions:
+      contents: write
+      id-token: write

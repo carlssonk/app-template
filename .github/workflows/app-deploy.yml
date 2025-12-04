@@ -2,38 +2,18 @@ name: Deploy App
 
 on:
   push:
-    branches: [main, dev/*]
+    branches: [main, dev]
     paths-ignore:
       - '**.tf'
       - '**.tfvars'
-  workflow_dispatch:
-    inputs:
-      environment:
-        type: choice
-        description: "Environment to deploy"
-        required: true
-        options:
-          - dev
 
 concurrency:
   group: deploy-app-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  route:
-    uses: carlssonk/cicd-toolkit/.github/workflows/deployment-router-trunk.yml@main
-    with:
-      event_name: ${{ github.event_name }}
-      branch: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
-      workflow_dispatch_environment: ${{ github.event.inputs.environment }}
-
   deploy-dev:
-    needs: route
-    # Disabled
-    if: |
-      false &&
-      github.event_name == 'workflow_dispatch' && 
-      github.event.inputs.environment == 'dev'
+    if: github.event_name == 'push' && github.ref_name == 'dev'
     uses: carlssonk/cicd-toolkit/.github/workflows/deploy-s3.yml@main
     with:
       environment: dev
@@ -45,9 +25,7 @@ jobs:
       contents: read
 
   deploy-staging:
-    needs: route
-    # Disabled
-    if: false && contains(fromJson(needs.route.outputs.environments), 'staging')
+    if: github.event_name == 'push' && github.ref_name == 'main'
     uses: carlssonk/cicd-toolkit/.github/workflows/deploy-s3.yml@main
     with:
       environment: staging
@@ -59,8 +37,7 @@ jobs:
       contents: read
 
   deploy-production:
-    needs: route
-    if: contains(fromJson(needs.route.outputs.environments), 'production')
+    if: github.event_name == 'push' && github.ref_name == 'main'
     uses: carlssonk/cicd-toolkit/.github/workflows/deploy-s3.yml@main
     with:
       environment: production

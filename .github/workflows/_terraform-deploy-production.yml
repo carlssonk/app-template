@@ -10,7 +10,7 @@ on:
 
 jobs:
   deploy-production:
-    name: ${{ inputs.action == 'plan' && 'Plan' || 'Deploy' }} Production
+    name: ${{ inputs.action == 'plan' && 'Plan' || 'Apply' }} Production
     uses: carlssonk/terraform-modules/.github/workflows/deploy.yml@main
     with:
       environment: production
@@ -26,7 +26,7 @@ jobs:
       id-token: write
 
   deploy-global:
-    name: ${{ inputs.action == 'plan' && 'Plan' || 'Deploy' }} Global
+    name: ${{ inputs.action == 'plan' && 'Plan' || 'Apply' }} Global
     uses: carlssonk/terraform-modules/.github/workflows/deploy.yml@main
     with:
       environment: production
