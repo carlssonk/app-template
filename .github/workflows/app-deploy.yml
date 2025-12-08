@@ -56,6 +56,5 @@ jobs:
       environment: production
       commit_hash: ${{ needs.deploy-production.outputs.commit_hash }}
       tag_prefix: release
-      generate_changelog: true
     permissions:
       contents: write
