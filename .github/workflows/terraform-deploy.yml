@@ -61,6 +61,7 @@ jobs:
     uses: ./.github/workflows/_terraform-deploy-production.yml
     with:
       action: plan
+    secrets: inherit
     permissions:
       contents: write
       id-token: write
@@ -84,6 +85,7 @@ jobs:
     uses: ./.github/workflows/_terraform-deploy-production.yml
     with:
       action: apply
+    secrets: inherit
     permissions:
       contents: write
       id-token: write
