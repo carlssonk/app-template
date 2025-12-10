@@ -23,6 +23,7 @@ jobs:
       tf_root_directory: ./terraform/devops
       state_key: devops.tfstate
       action: ${{ inputs.action }}
+    secrets: inherit
     permissions:
       contents: write
       id-token: write

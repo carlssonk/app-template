@@ -1,3 +1,8 @@
+variable "organization" {
+  description = "Github username or organization name"
+  type        = string
+}
+
 variable "aws_region" {
   description = "AWS region for DevOps infrastructure"
   type        = string
@@ -14,4 +19,3 @@ variable "runs_on_email" {
   description = "Email for runs-on registration"
   type        = string
 }
-
