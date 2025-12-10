@@ -1,4 +1,4 @@
-name: Deploy Production Environments (Reusable)
+name: Deploy App Infrastructure - Production (Reusable)
 
 on:
   workflow_call:

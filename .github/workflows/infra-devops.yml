@@ -1,4 +1,4 @@
-name: Deploy DevOps Infrastructure
+name: Manage DevOps Infrastructure
 
 on:
   workflow_dispatch:

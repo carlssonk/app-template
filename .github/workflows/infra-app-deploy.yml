@@ -1,4 +1,4 @@
-name: Deploy Infrastructure
+name: Deploy App Infrastructure
 
 on:
   push:
@@ -60,7 +60,7 @@ jobs:
     if: |
       (github.event_name == 'pull_request' && github.base_ref == 'main') ||
       (github.event_name == 'push' && github.ref_name == 'main')
-    uses: ./.github/workflows/_terraform-app-deploy-production.yml
+    uses: ./.github/workflows/_infra-app-deploy-production.yml
     with:
       action: plan
     secrets: inherit
@@ -84,7 +84,7 @@ jobs:
     name: Apply Production
     needs: approve-production
     if: github.event_name == 'push' && github.ref_name == 'main'
-    uses: ./.github/workflows/_terraform-app-deploy-production.yml
+    uses: ./.github/workflows/_infra-app-deploy-production.yml
     with:
       action: apply
     secrets: inherit
