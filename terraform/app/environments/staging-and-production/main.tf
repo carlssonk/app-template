@@ -8,7 +8,7 @@ module "website" {
   root_domain = var.root_domain
   subdomain = var.subdomain
 
-  index_document = "main/index.html"
+  index_document = "index.html"
 
   tags = {
     Project      = "app-template"
