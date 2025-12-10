@@ -15,7 +15,7 @@ on:
 
 jobs:
   call-workflow:
-    uses: carlssonk/terraform-modules/.github/workflows/apply.yml@main
+    uses: carlssonk/terraform-modules/.github/workflows/deploy.yml@main
     with:
       environment: production
       aws_region: ${{ vars.AWS_REGION }}
