@@ -1,14 +1,3 @@
-terraform {
-  backend "s3" {}
-  
-  required_providers {
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "~> 5.0"
-    }
-  }
-}
-
 provider "cloudflare" {
   api_token = var.cloudflare_api_token
 }
@@ -22,9 +11,7 @@ module "website" {
   index_document = "main/index.html"
 
   tags = {
-    Environment  = var.environment
     Project      = "app-template"
-    ManagedBy    = "terraform"
     Repository   = "github.com/carlssonk/app-template"
   }
 }
