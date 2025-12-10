@@ -15,6 +15,3 @@ module "runs_on" {
 # - Shared build caches
 # - Container registries
 # - Secret management infrastructure
-
-
-
