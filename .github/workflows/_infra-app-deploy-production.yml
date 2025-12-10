@@ -19,8 +19,7 @@ jobs:
       tf_root_directory: ./terraform/app/environments/staging-and-production
       state_key: terraform.tfstate
       action: ${{ inputs.action }}
-    secrets:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    secrets: inherit
     permissions:
       contents: write
       id-token: write
@@ -35,8 +34,7 @@ jobs:
       tf_root_directory: ./terraform/app/global
       state_key: global.tfstate
       action: ${{ inputs.action }}
-    secrets:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    secrets: inherit
     permissions:
       contents: write
       id-token: write
