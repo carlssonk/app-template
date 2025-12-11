@@ -9,6 +9,8 @@ module "website" {
   subdomain = var.subdomain
 
   index_document = "index.html"
+  path_to_index_document = "/latest"
+  cloudflare_zone_id = var.cloudflare_zone_id
 
   tags = {
     Project      = "app-template"
