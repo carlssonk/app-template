@@ -3,9 +3,13 @@ name: Deploy App
 on:
   push:
     branches: [main, dev]
-    paths-ignore:
-      - '**.tf'
-      - '**.tfvars'
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'vite.config.ts'
 
 concurrency:
   group: deploy-app-${{ github.ref }}
