@@ -18,40 +18,47 @@ concurrency:
   group: terraform-deploy-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
 jobs:
   deploy-dev:
     name: ${{ github.event_name == 'pull_request' && 'Plan' || 'Apply' }} Infrastructure - Development
+    runs-on: ubuntu-latest
     if: |
       (github.event_name == 'pull_request' && github.base_ref == 'dev') ||
       (github.event_name == 'push' && github.ref_name == 'dev')
-    uses: carlssonk/terraform-modules/.github/workflows/deploy.yml@main
-    with:
-      environment: dev
-      aws_region: ${{ vars.AWS_REGION }}
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_DEV }}
-      tf_root_directory: ./terraform/app/environments/dev
-      action: ${{ github.event_name == 'pull_request' && 'plan' || 'apply' }}
-    secrets: inherit
     permissions:
       contents: write
       id-token: write
+    steps:
+      - name: Deploy Infrastructure
+        uses: carlssonk/terraform-modules/.github/actions/deploy@main
+        with:
+          environment: dev
+          aws_region: ${{ vars.AWS_REGION }}
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID_DEV }}
+          tf_root_directory: ./terraform/app/environments/dev
+          action: ${{ github.event_name == 'pull_request' && 'plan' || 'apply' }}
 
   deploy-staging:
     name: ${{ github.event_name == 'pull_request' && 'Plan' || 'Apply' }} Infrastructure - Staging
+    runs-on: ubuntu-latest
     if: |
       (github.event_name == 'pull_request' && github.base_ref == 'main') ||
       (github.event_name == 'push' && github.ref_name == 'main')
-    uses: carlssonk/terraform-modules/.github/workflows/deploy.yml@main
-    with:
-      environment: staging
-      aws_region: ${{ vars.AWS_REGION }}
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_STAGING }}
-      tf_root_directory: ./terraform/app/environments/staging-and-production
-      action: ${{ github.event_name == 'pull_request' && 'plan' || 'apply' }}
-    secrets: inherit
     permissions:
       contents: write
       id-token: write
+    steps:
+      - name: Deploy Infrastructure
+        uses: carlssonk/terraform-modules/.github/actions/deploy@main
+        with:
+          environment: staging
+          aws_region: ${{ vars.AWS_REGION }}
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID_STAGING }}
+          tf_root_directory: ./terraform/app/environments/staging-and-production
+          action: ${{ github.event_name == 'pull_request' && 'plan' || 'apply' }}
 
   plan-production:
     name: Plan Production
