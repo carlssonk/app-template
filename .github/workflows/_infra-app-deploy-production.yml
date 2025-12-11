@@ -8,6 +8,10 @@ on:
         type: string
         description: "Terraform action (plan or apply)"
 
+env:
+  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
+
 jobs:
   deploy-production:
     name: ${{ inputs.action == 'plan' && 'Plan' || 'Apply' }} Production
