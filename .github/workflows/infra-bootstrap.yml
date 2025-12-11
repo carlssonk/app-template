@@ -19,6 +19,7 @@ jobs:
       environment: ${{ inputs.environment }}
       aws_region: ${{ vars.AWS_REGION }}
       organization: ${{ github.repository_owner }}
+      runner: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     secrets:
       BOOTSTRAP_AWS_ACCESS_KEY: ${{ secrets.BOOTSTRAP_AWS_ACCESS_KEY }}
       BOOTSTRAP_AWS_ACCESS_SECRET: ${{ secrets.BOOTSTRAP_AWS_ACCESS_SECRET }}
