@@ -25,7 +25,7 @@ env:
 
 jobs:
   validate-confirmation:
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     timeout-minutes: 5
     steps:
       - name: Validate confirmation
@@ -39,7 +39,7 @@ jobs:
   destroy-dev:
     needs: validate-confirmation
     if: inputs.environment == 'dev'
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
       contents: write
       id-token: write
@@ -55,7 +55,7 @@ jobs:
   destroy-staging:
     needs: validate-confirmation
     if: inputs.environment == 'staging'
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
       contents: write
       id-token: write
@@ -71,7 +71,7 @@ jobs:
   destroy-production:
     needs: validate-confirmation
     if: inputs.environment == 'production'
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
       contents: write
       id-token: write
@@ -88,7 +88,7 @@ jobs:
   destroy-global:
     needs: validate-confirmation
     if: inputs.environment == 'production'
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
       contents: write
       id-token: write

@@ -6,13 +6,13 @@ on:
     paths:
       - '**.tf'
       - '**.tfvars'
-      - '!terraform/devops/**'  # DevOps infra deployed manually
+      - '!terraform/devops/**'
   pull_request:
     branches: [main, dev]
     paths:
       - '**.tf'
       - '**.tfvars'
-      - '!terraform/devops/**'  # DevOps infra deployed manually
+      - '!terraform/devops/**'
 
 concurrency:
   group: terraform-deploy-${{ github.ref }}
@@ -24,7 +24,7 @@ env:
 jobs:
   deploy-dev:
     name: ${{ github.event_name == 'pull_request' && 'Plan' || 'Apply' }} Infrastructure - Development
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     if: |
       (github.event_name == 'pull_request' && github.base_ref == 'dev') ||
       (github.event_name == 'push' && github.ref_name == 'dev')
@@ -43,7 +43,7 @@ jobs:
 
   deploy-staging:
     name: ${{ github.event_name == 'pull_request' && 'Plan' || 'Apply' }} Infrastructure - Staging
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     if: |
       (github.event_name == 'pull_request' && github.base_ref == 'main') ||
       (github.event_name == 'push' && github.ref_name == 'main')
@@ -75,7 +75,7 @@ jobs:
 
   approve-production:
     name: Approve Production Deployment
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     timeout-minutes: 1440  # 24 hours
     needs: plan-production
     if: github.event_name == 'push' && github.ref_name == 'main'

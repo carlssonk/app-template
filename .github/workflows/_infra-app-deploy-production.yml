@@ -11,7 +11,7 @@ on:
 jobs:
   deploy-production:
     name: ${{ inputs.action == 'plan' && 'Plan' || 'Apply' }} Production
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
       contents: write
       id-token: write
@@ -28,7 +28,7 @@ jobs:
 
   deploy-global:
     name: ${{ inputs.action == 'plan' && 'Plan' || 'Apply' }} Global
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
       contents: write
       id-token: write
