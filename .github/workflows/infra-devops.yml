@@ -17,8 +17,19 @@ env:
   TF_VAR_runs_on_license_key: ${{ secrets.RUNS_ON_LICENSE_KEY }}
 
 jobs:
+  confirm-destroy:
+    if: inputs.action == 'destroy'
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
+    environment:
+      name: confirm-destroy-devops
+    steps:
+      - name: Confirmation Required
+        run: echo "Destroy action confirmed for DevOps infrastructure"
+
   manage-devops:
-    runs-on: ubuntu-latest
+    needs: [confirm-destroy]
+    if: always() && (inputs.action != 'destroy' || needs.confirm-destroy.result == 'success')
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
       contents: write
       id-token: write
