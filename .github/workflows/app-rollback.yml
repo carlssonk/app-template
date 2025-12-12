@@ -55,16 +55,3 @@ jobs:
     permissions:
       id-token: write
       contents: read
-
-  create-release-tag:
-    needs: rollback-production
-    if: needs.rollback-production.result == 'success'
-    uses: carlssonk/cicd-toolkit/.github/workflows/create-release.yml@main
-    with:
-      environment: production
-      commit_hash: ${{ needs.rollback-production.outputs.target_commit_hash }}
-      tag_prefix: rollback
-      generate_changelog: false
-      runner: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
-    permissions:
-      contents: write
