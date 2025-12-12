@@ -19,16 +19,8 @@ on:
           - dev
           - staging
           - production
+          - global
         default: staging
-      terraform_directory:
-        type: choice
-        description: "Terraform directory"
-        required: true
-        options:
-          - app-staging-production
-          - app-global
-          - devops
-        default: app-staging-production
       lock_id:
         type: string
         description: "Lock ID (required for unlock operation)"
@@ -81,8 +73,8 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - name: Destroy Infrastructure
-        uses: carlssonk/terraform-modules/.github/actions/destroy@main
+      - name: Fix Infrastructure
+        uses: carlssonk/terraform-modules/.github/actions/fix@main
         with:
           environment: dev
           aws_region: ${{ vars.AWS_REGION }}
@@ -101,8 +93,8 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - name: Destroy Infrastructure
-        uses: carlssonk/terraform-modules/.github/actions/destroy@main
+      - name: Fix Infrastructure
+        uses: carlssonk/terraform-modules/.github/actions/fix@main
         with:
           environment: staging
           aws_region: ${{ vars.AWS_REGION }}
@@ -121,8 +113,8 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - name: Destroy Infrastructure
-        uses: carlssonk/terraform-modules/.github/actions/destroy@main
+      - name: Fix Infrastructure
+        uses: carlssonk/terraform-modules/.github/actions/fix@main
         with:
           environment: production
           aws_region: ${{ vars.AWS_REGION }}
@@ -136,7 +128,7 @@ jobs:
 
   fix-global:
     needs: validate-inputs
-    if: inputs.environment == 'production'
+    if: inputs.environment == 'global'
     runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
       contents: write

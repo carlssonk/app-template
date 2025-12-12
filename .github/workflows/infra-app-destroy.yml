@@ -11,6 +11,7 @@ on:
           - dev
           - staging
           - production
+          - global
       confirmation:
         description: 'Type "DESTROY" to confirm infrastructure destruction'
         required: true
@@ -88,7 +89,7 @@ jobs:
 
   destroy-global:
     needs: validate-confirmation
-    if: inputs.environment == 'production'
+    if: inputs.environment == 'global'
     runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
       contents: write
