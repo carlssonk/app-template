@@ -16,5 +16,5 @@ module "carlssonk_se_zone" {
 module "bucket_path_rewrite" {
   source      = "github.com/carlssonk/terraform-modules//modules/cloudflare-path-prefix?ref=main"
   zone_id     = var.cloudflare_zone_id
-  path_prefix = "latest/"
+  path_prefix = "/latest"
 }
