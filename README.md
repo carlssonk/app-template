@@ -2,6 +2,8 @@
 
 A **simple** production-ready template for deploying Frontend applications to AWS S3 + Cloudflare, focusing on automated CI/CD pipelines and infrastructure as code.
 
+> This project leverages Reusable Workflows and Terraform Modules from these upstream repositories: [carlssonk/cicd-toolkit](https://github.com/carlssonk/cicd-toolkit), [carlssonk/terraform-modules](https://github.com/carlssonk/terraform-modules)
+
 ## Overview
 
 This repository provides a complete setup for modern web application deployment with:
