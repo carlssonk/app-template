@@ -9,6 +9,7 @@ This repository provides a complete setup for modern web application deployment 
 - **Frontend**: Scaffolded vite-react-typescript app
 - **Infrastructure**: Terraform-managed AWS S3 + Cloudflare Workers & CDN
 - **CI/CD**: GitHub Actions workflows for automated deployments, rollbacks, and releases
+- **Custom Runner**: Custom RunsOn runner for faster workflows
 - **Multi-Environment**: Support for dev, staging, and production environments
 - **Versioned Deployments**: Immutable deployments with rollback capabilities
 - **Security**: OIDC authentication for AWS (no long-lived credentials)
