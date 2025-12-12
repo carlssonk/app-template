@@ -10,6 +10,15 @@ module "website" {
 
   index_document = "index.html"
 
+  lifecycle_rules = [
+    {
+      id              = "cleanup-old-releases"
+      enabled         = true
+      prefix          = "releases/"
+      expiration_days = 180
+    }
+  ]
+
   tags = {
     Project    = "app-template"
     Repository = "github.com/carlssonk/app-template"
