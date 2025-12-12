@@ -31,6 +31,20 @@ The Cloudflare Worker acts as an intelligent router, enabling gradual rollouts a
 
 This guide will help you configure the repository after cloning.
 
+## Cloud Provider Configuration
+
+### AWS
+1. Create a new AWS account for the environment you want to bootstrap. (or use an existing account; you can reset it with [aws-nuke](https://github.com/ekristen/aws-nuke))
+2. Create a new IAM bootstrap user and add [this](https://github.com/carlssonk/terraform-modules?tab=readme-ov-file#bootstrap-user-iam-policy) as inline policy (replace `AWS_ACCOUNT_ID` and `AWS_REGION` placeholders)
+3. Create a secret access key from the bootstrap user and save the access key and access secret for [this](https://github.com/carlssonk/app-template?tab=readme-ov-file#3-configure-environment-secrets) step (or simply complete that step now so you dont need to save the keys)
+4. Done
+
+### Cloudflare
+1. Create a Cloudflare account
+2. Add your domain name and make sure DNS records are empty and you have added the cloudflare nameservers to your domain register
+3. Retrieve your API token at your [Cloudflare dashboard](https://dash.cloudflare.com/profile/api-tokens) and add `CLOUDFLARE_API_TOKEN` to your environment secret.
+4. Done
+
 ## GitHub Actions Configuration
 
 ### 1. Create Environments
@@ -58,6 +72,7 @@ Go to **Settings** → **Secrets and variables** → **Actions** → **Variables
 | `S3_BUCKET_STAGING` | S3 bucket name for staging environment | `staging.yourdomain.com` |
 | `S3_BUCKET_PRODUCTION` | S3 bucket name for production environment | `www.yourdomain.com` |
 | `AWS_REGION` | AWS region for all environments | `eu-north-1` |
+| `CLOUDFLARE_ZONE_ID` | Cloudflare Zone ID | `6161a4811420882a6eb7d8ec1006645c` |
 
 ### 3. Configure Environment Secrets
 
@@ -78,6 +93,7 @@ Go to **Settings** → **Secrets and variables** → **Actions** → **Secrets**
 | Secret Name | Description | How to Get |
 |------------|-------------|------------|
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token for DNS/Workers | Create at Cloudflare Dashboard → My Profile → API Tokens |
+| `RUNS_ON_LICENSE_KEY` | Used for custom RunsOn runner (Optional) | Visit https://runs-on.com/pricing/ |
 
 **Note:** Make sure your Cloudflare API token has permissions for Workers and DNS.
 
@@ -85,29 +101,31 @@ Go to **Settings** → **Secrets and variables** → **Actions** → **Secrets**
 
 Update the following files with your own values:
 
-### `terraform/environments/staging-and-production/staging.tfvars`
+### `terraform/app/environments/staging-and-production/staging.tfvars`
 ```hcl
 environment = "staging"
 root_domain = "yourdomain.com"                    # Change this
 subdomain = "staging.app-template"                # Change this
-cloudflare_account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"  # Change this
 ```
 
-### `terraform/environments/staging-and-production/production.tfvars`
+### `terraform/app/environments/staging-and-production/production.tfvars`
 ```hcl
 environment = "production"
 root_domain = "yourdomain.com"                    # Change this
 subdomain = "app-template"                        # Change this
-cloudflare_account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"  # Change this
 ```
+
+Be sure to also update the values these files as well to fit your needs
+* `terraform/global/main.tf`
+* `terraform/devops/main.tf`
 
 ## Quick Start
 
-1. Create GitHub environments (dev, staging, production, infra-approval)
-2. Configure repository variables with environment suffixes (AWS_ACCOUNT_ID_*, S3_BUCKET_*, AWS_REGION)
+1. Create the GitHub environments you need. Available options: (dev, staging, production, infra-approval)
+2. Configure repository variables (AWS_ACCOUNT_ID_*, S3_BUCKET_*, AWS_REGION, CLOUDFLARE_ZONE_ID)
 3. Configure environment secrets for each environment (BOOTSTRAP_AWS_ACCESS_KEY & BOOTSTRAP_AWS_ACCESS_SECRET)
-4. Configure repository secrets (CLOUDFLARE_API_TOKEN)
-5. Update the Terraform `.tfvars` files with your domain and Cloudflare account ID
-6. Run the Terraform bootstrap workflow to set up remote state
-7. Deploy infrastructure using the Terraform deploy workflow
-8. Deploy the app using the app deploy workflow
+4. Configure repository secrets (CLOUDFLARE_API_TOKEN, RUNS_ON_LICENSE_KEY)
+5. Update the Terraform `.tfvars` files and other `main.tf` files
+6. Run the Terraform bootstrap workflow to set up remote state (You can run this workflow multiple times if needed)
+7. Push a commit to `main` (needs \*\*.tf,\*\*.tfvars changes) to deploy infrastructure (staging, production)
+8. Push a commit to `main` (needs src/** changes) to deploy app (staging, production)
