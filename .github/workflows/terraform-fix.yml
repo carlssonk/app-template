@@ -74,7 +74,7 @@ jobs:
           echo "✓ Import operation validated"
 
   fix-dev:
-    needs: validate-confirmation
+    needs: validate-inputs
     if: inputs.environment == 'dev'
     runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
@@ -94,7 +94,7 @@ jobs:
           import_id: ${{ inputs.import_id }}
 
   fix-staging:
-    needs: validate-confirmation
+    needs: validate-inputs
     if: inputs.environment == 'staging'
     runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
@@ -114,7 +114,7 @@ jobs:
           import_id: ${{ inputs.import_id }}
 
   fix-production:
-    needs: validate-confirmation
+    needs: validate-inputs
     if: inputs.environment == 'production'
     runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
@@ -135,7 +135,7 @@ jobs:
           import_id: ${{ inputs.import_id }}
 
   fix-global:
-    needs: validate-confirmation
+    needs: validate-inputs
     if: inputs.environment == 'production'
     runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
