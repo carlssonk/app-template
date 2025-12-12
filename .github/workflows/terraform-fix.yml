@@ -43,8 +43,12 @@ on:
         required: false
 
 concurrency:
-  group: terraform-fix-${{ inputs.environment }}-${{ inputs.terraform_directory }}
+  group: terraform-fix-${{ inputs.environment }}
   cancel-in-progress: false
+
+env:
+  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
 
 jobs:
   validate-inputs:
@@ -69,116 +73,84 @@ jobs:
           fi
           echo "✓ Import operation validated"
 
-  confirm-operation:
-    name: Confirm Operation
-    needs: validate-inputs
-    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
-    environment:
-      name: terraform-fix-approval
-    steps:
-      - name: Display operation details
-        run: |
-          echo "Operation: ${{ inputs.operation }}"
-          echo "Environment: ${{ inputs.environment }}"
-          echo "Terraform Directory: ${{ inputs.terraform_directory }}"
-          if [ "${{ inputs.operation }}" == "unlock" ]; then
-            echo "Lock ID: ${{ inputs.lock_id }}"
-          elif [ "${{ inputs.operation }}" == "import" ]; then
-            echo "Resource Address: ${{ inputs.import_address }}"
-            echo "Resource ID: ${{ inputs.import_id }}"
-          fi
-          echo ""
-          echo "Waiting for manual approval..."
-
-  execute-operation:
-    name: Execute ${{ inputs.operation }} - ${{ inputs.environment }}
-    needs: confirm-operation
+  fix-dev:
+    needs: validate-confirmation
+    if: inputs.environment == 'dev'
     runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set Terraform directory path
-        id: set-path
-        run: |
-          case "${{ inputs.terraform_directory }}" in
-            "app-staging-production")
-              echo "tf_path=./terraform/app/environments/staging-and-production" >> $GITHUB_OUTPUT
-              echo "state_key=terraform.tfstate" >> $GITHUB_OUTPUT
-              ;;
-            "app-global")
-              echo "tf_path=./terraform/app/global" >> $GITHUB_OUTPUT
-              echo "state_key=global.tfstate" >> $GITHUB_OUTPUT
-              ;;
-            "devops")
-              echo "tf_path=./terraform/devops" >> $GITHUB_OUTPUT
-              echo "state_key=devops.tfstate" >> $GITHUB_OUTPUT
-              ;;
-          esac
-
-      - name: Set AWS Account ID
-        id: set-account
-        run: |
-          case "${{ inputs.environment }}" in
-            "dev")
-              echo "account_id=${{ vars.AWS_ACCOUNT_ID_DEV }}" >> $GITHUB_OUTPUT
-              ;;
-            "staging")
-              echo "account_id=${{ vars.AWS_ACCOUNT_ID_STAGING }}" >> $GITHUB_OUTPUT
-              ;;
-            "production")
-              echo "account_id=${{ vars.AWS_ACCOUNT_ID_PRODUCTION }}" >> $GITHUB_OUTPUT
-              ;;
-          esac
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Destroy Infrastructure
+        uses: carlssonk/terraform-modules/.github/actions/destroy@main
         with:
-          role-to-assume: arn:aws:iam::${{ steps.set-account.outputs.account_id }}:role/github-actions-role
-          aws-region: ${{ vars.AWS_REGION }}
+          environment: dev
+          aws_region: ${{ vars.AWS_REGION }}
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID_DEV }}
+          tf_root_directory: ./terraform/app/environments/dev
+          operation: ${{ inputs.operation }}
+          lock_id: ${{ inputs.lock_id }}
+          import_address: ${{ inputs.import_address }}
+          import_id: ${{ inputs.import_id }}
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+  fix-staging:
+    needs: validate-confirmation
+    if: inputs.environment == 'staging'
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Destroy Infrastructure
+        uses: carlssonk/terraform-modules/.github/actions/destroy@main
         with:
-          terraform_version: ~1.9.0
+          environment: staging
+          aws_region: ${{ vars.AWS_REGION }}
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID_STAGING }}
+          tf_root_directory: ./terraform/app/environments/staging-and-production
+          operation: ${{ inputs.operation }}
+          lock_id: ${{ inputs.lock_id }}
+          import_address: ${{ inputs.import_address }}
+          import_id: ${{ inputs.import_id }}
 
-      - name: Terraform Init
-        working-directory: ${{ steps.set-path.outputs.tf_path }}
-        run: |
-          terraform init \
-            -backend-config="bucket=${{ vars.AWS_REGION }}-${{ steps.set-account.outputs.account_id }}-terraform-state" \
-            -backend-config="key=${{ steps.set-path.outputs.state_key }}" \
-            -backend-config="region=${{ vars.AWS_REGION }}" \
-            -backend-config="dynamodb_table=${{ vars.AWS_REGION }}-${{ steps.set-account.outputs.account_id }}-terraform-state-lock"
+  fix-production:
+    needs: validate-confirmation
+    if: inputs.environment == 'production'
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Destroy Infrastructure
+        uses: carlssonk/terraform-modules/.github/actions/destroy@main
+        with:
+          environment: production
+          aws_region: ${{ vars.AWS_REGION }}
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID_PRODUCTION }}
+          tf_root_directory: ./terraform/app/environments/staging-and-production
+          state_key: terraform.tfstate
+          operation: ${{ inputs.operation }}
+          lock_id: ${{ inputs.lock_id }}
+          import_address: ${{ inputs.import_address }}
+          import_id: ${{ inputs.import_id }}
 
-      - name: Unlock State
-        if: inputs.operation == 'unlock'
-        working-directory: ${{ steps.set-path.outputs.tf_path }}
-        run: |
-          echo "Unlocking state with Lock ID: ${{ inputs.lock_id }}"
-          terraform force-unlock -force "${{ inputs.lock_id }}"
-          echo "✓ State unlocked successfully"
-
-      - name: Import Resource
-        if: inputs.operation == 'import'
-        working-directory: ${{ steps.set-path.outputs.tf_path }}
-        env:
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
-          TF_VAR_runs_on_license_key: ${{ secrets.RUNS_ON_LICENSE_KEY }}
-        run: |
-          echo "Importing resource:"
-          echo "  Address: ${{ inputs.import_address }}"
-          echo "  ID: ${{ inputs.import_id }}"
-          terraform import "${{ inputs.import_address }}" "${{ inputs.import_id }}"
-          echo "✓ Resource imported successfully"
-
-      - name: Verify State
-        working-directory: ${{ steps.set-path.outputs.tf_path }}
-        run: |
-          echo "Verifying state..."
-          terraform state list
-          echo "✓ State verification complete"
+  fix-global:
+    needs: validate-confirmation
+    if: inputs.environment == 'production'
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Fix Infrastructure
+        uses: carlssonk/terraform-modules/.github/actions/fix@main
+        with:
+          environment: production
+          aws_region: ${{ vars.AWS_REGION }}
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID_PRODUCTION }}
+          tf_root_directory: ./terraform/app/global
+          state_key: global.tfstate
+          operation: ${{ inputs.operation }}
+          lock_id: ${{ inputs.lock_id }}
+          import_address: ${{ inputs.import_address }}
+          import_id: ${{ inputs.import_id }}
