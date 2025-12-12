@@ -1,13 +1,13 @@
 # App Template
 
-A **simple** production-ready template for deploying Frontend applications to AWS S3 + Cloudflare Workers & CDN, focusing on automated CI/CD pipelines and infrastructure as code.
+A **simple** production-ready template for deploying Frontend applications to AWS S3 + Cloudflare, focusing on automated CI/CD pipelines and infrastructure as code.
 
 ## Overview
 
 This repository provides a complete setup for modern web application deployment with:
 
 - **Frontend**: Scaffolded vite-react-typescript app
-- **Infrastructure**: Terraform-managed AWS S3 + Cloudflare Workers & CDN
+- **Infrastructure**: Terraform-managed AWS S3 + Cloudflare
 - **CI/CD**: GitHub Actions workflows for automated deployments, rollbacks, and releases
 - **Custom Runner**: Custom RunsOn runner for faster workflows
 - **Multi-Environment**: Support for dev, staging, and production environments
@@ -19,13 +19,9 @@ This repository provides a complete setup for modern web application deployment 
 This template is built around **trunk-based development** principles:
 
 - **Single Branch Deployments** - All changes merge to `main` and deploy automatically to production
-- **Gradual Rollouts** - Cloudflare Workers enable progressive traffic shifting between versions (e.g., 90% old version, 10% new version)
 - **Fast Rollbacks** - Instant rollback to any previous deployment without rebuilding
 - **Immutable Deployments** - Each commit creates a versioned deployment in S3, never overwritten
 - **Confidence Through Testing in Production** - Gradual rollouts let you test new versions with real traffic before full deployment
-
-The Cloudflare Worker acts as an intelligent router, enabling gradual rollouts at the infrastructure level. This complements app-level feature flags: use the Worker for large changes (framework upgrades, breaking changes) and app flags for smaller features.
-
 ---
 
 # Setup Guide
@@ -93,10 +89,10 @@ Go to **Settings** → **Secrets and variables** → **Actions** → **Secrets**
 
 | Secret Name | Description | How to Get |
 |------------|-------------|------------|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API token for DNS/Workers | Create at Cloudflare Dashboard → My Profile → API Tokens |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token for DNS/Rules | Create at Cloudflare Dashboard → My Profile → API Tokens |
 | `RUNS_ON_LICENSE_KEY` | Used for custom RunsOn runner (Optional) | Visit https://runs-on.com/pricing/ |
 
-**Note:** Make sure your Cloudflare API token has permissions for Workers and DNS.
+**Note:** Make sure your Cloudflare API token has the proper permissions (If unsure what permissions you need, just look at the 403 messages from the pipeline).
 
 ## Terraform Configuration
 
