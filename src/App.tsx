@@ -1,7 +1,4 @@
-import './App.css'
-
 function App() {
-
   return (
     <div>
       <h1>:D</h1>
