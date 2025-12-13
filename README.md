@@ -20,7 +20,7 @@ This repository provides a complete setup for modern web application deployment 
 
 This template is built around **trunk-based development** principles:
 
-- **Single Branch Deployments** - All changes merge to `main` and deploy automatically to production
+- **Single Branch Deployments** - All changes merge to `main` and deploy automatically to staging and production
 - **Fast Rollbacks** - Instant rollback to any previous deployment without rebuilding
 - **Immutable Deployments** - Each commit creates a versioned deployment in S3, never overwritten
 - **Confidence Through Testing in Production** - Gradual rollouts let you test new versions with real traffic before full deployment
