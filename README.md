@@ -41,8 +41,14 @@ This guide will help you configure the repository after cloning.
 ### Cloudflare
 1. Create a Cloudflare account
 2. Add your domain name and make sure DNS records are empty and you have added the cloudflare nameservers to your domain register
-3. Retrieve your API token at your [Cloudflare dashboard](https://dash.cloudflare.com/profile/api-tokens) and add `CLOUDFLARE_API_TOKEN` to your environment secret.
-4. Done
+3. Retrieve your API token at your [Cloudflare dashboard](https://dash.cloudflare.com/profile/api-tokens). You need at least these permissions:
+* Transform Rules: Edit
+* Zone Settings: Edit
+* Zone: Edit
+* Cache Purge: Purge
+* DNS: Edit
+4. Add `CLOUDFLARE_API_TOKEN` to your environment secret.
+5. Done
 
 ## GitHub Actions Configuration
 
